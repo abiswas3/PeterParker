@@ -18,12 +18,13 @@ class BaseHTMLRenderer(object):
 
     def get_main_page(self, url, fname, override=False):
 
-        self._driver = make_driver() #:Selenium webdriver
-        self._driver.set_page_load_timeout(500)
         
         if os.path.exists(fname) and not override:
             return
 
+        self._driver = make_driver() #:Selenium webdriver
+        self._driver.set_page_load_timeout(500)
+        
         temp = fname.split('/')
         base_dir = "/".join(temp[:-1])        
         self.fname = fname
@@ -36,7 +37,6 @@ class BaseHTMLRenderer(object):
             # print(C.RED, self._driver.title, C.RESET)
             self.page_title =  self._driver.title
             self._driver.quit()
-            # print("page saved")
             ret_code= 0
 
         except Exception as e:
