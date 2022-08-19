@@ -5,6 +5,8 @@ load the page and run the required JS to render the page.
 '''
 from selenium import webdriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from webdriver_manager.firefox import GeckoDriverManager
+
 # from selenium.webdriver.remote.command import Command
 
 # Lambda functions
@@ -20,4 +22,9 @@ def make_driver():
     """
 
     # currently only handles one choice
-    return webdriver.Firefox()
+
+    driver = webdriver.Firefox(executable_path=GeckoDriverManager().install())
+    return driver
+#    binary = FirefoxBinary('geckodriver')
+#    browser = webdriver.Firefox(firefox_binary=binary)
+#    return webdriver.Firefox()
