@@ -1,11 +1,12 @@
+import lxml
 from lxml import etree
 from io import StringIO
-import extruct
 import json
 import string
 from collections import Counter
 import numpy as np
 import pathlib
+
 
 from . import utils
 from . import dom_node 
@@ -14,7 +15,7 @@ class DocumentExtractor():
     
     def __init__(self, **kwargs):
 
-        self.parser = etree.HTMLParser()
+        self.parser = etree.HTMLParser(encoding='UTF-8')
         self.nlp = None
         if 'spacy_import' in kwargs:
             self.nlp = 1 # change this to real spacy
@@ -42,37 +43,38 @@ class DocumentExtractor():
 
         self.bad_page = False
         if schema_org_check:
-            try:
-                schema_org = extruct.extract(page, base_url=url)
-                if len(schema_org['json-ld']):
-                    self.schema_org = schema_org
-            except:
-                pass
+            # try:
+            #     schema_org = extruct.extract(page, base_url=url)
+            #     if len(schema_org['json-ld']):
+            #         self.schema_org = schema_org
+            # except:
+            #     pass
+            pass
         
         # GET ETREE
         # This could raise an exception (NOTE)
         try:
             self.tree   = etree.parse(StringIO(page), self.parser)
+            self.curr_page = page
+            self.curr_url = url
+
+            text_nodes = [dom_node.Text_Node(x, x.getparent(), self.getpath()) for x in self.tree.xpath("//text()")]
+            self.text_nodes = [node for node in text_nodes if node.valid]
+
+            # Some fuzzy title node calcullations
+            title_node = [node for node in self.text_nodes if node.is_title]
+            if len(title_node) > 1:
+                temp = np.argsort([len(node.text) for node in title_node])[::-1]
+                self.title_node = title_node[temp[0]]
+
+            elif len(title_node) == 1:
+                self.title_node = title_node[0]
+            else:
+                self.title_node = None    
         except:
-            self.bad_page = True
+            raise Exception("LXML PROCESSING ERROR")            
             
-        self.curr_page = page
-        self.curr_url = url
 
-        text_nodes = [dom_node.Text_Node(x, x.getparent(), self.getpath())
-                      for x in self.tree.xpath("//text()")]
-        self.text_nodes = [node for node in text_nodes if node.valid]
-
-        # Some fuzzy title node calcullations
-        title_node = [node for node in self.text_nodes if node.is_title]
-        if len(title_node) > 1:
-            temp = np.argsort([len(node.text) for node in title_node])[::-1]
-            self.title_node = title_node[temp[0]]
-
-        elif len(title_node) == 1:
-            self.title_node = title_node[0]
-        else:
-            self.title_node = None
 
             
     def save_minimum_info(self, base=""):
